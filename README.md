@@ -1,1 +1,2 @@
-# hapi-email-server
+# Post Office
+## Hapi Email Server
