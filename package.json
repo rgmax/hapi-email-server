@@ -1,0 +1,30 @@
+{
+  "name": "hapi-email-server",
+  "version": "1.0.0",
+  "description": "Hapi Email Server as a plugin",
+  "main": "build/main",
+  "peerDependencies": {
+    "hapi": ">=10.4.1"
+  },
+  "engines": {
+    "node": "0.10.*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rgmax/hapi-email-server"
+  },
+  "scripts": {
+    "test": "\"echo \\\"Error: no test specified\\\" && exit 1\""
+  },
+  "keywords": [
+    "hapi",
+    "email",
+    "plugin"
+  ],
+  "author": "Reza Gholamzadeh <reza.gholamzadeh20@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-coffee": "^2.3.2"
+  }
+}
