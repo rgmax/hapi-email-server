@@ -12,8 +12,8 @@ module.exports = class Validator
     params:
       trigger_key: Joi.string().required()
     payload:
-      email: Joi.string().email()
       data: Joi.object().required()
+      email: Joi.string().email()
 
   unsubscribe:
     params:

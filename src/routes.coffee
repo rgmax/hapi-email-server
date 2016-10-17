@@ -1,7 +1,8 @@
+TriggerValidator = require './models/triggerValidator'
+
 module.exports = (server, options) ->
 
-  Trigger = require './handlers/trigger'
-  TriggerValidator = require './models/triggerValidator'
+  Trigger = require('./handlers/trigger') server, options
 
   [
     {
