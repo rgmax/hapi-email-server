@@ -4,13 +4,13 @@ module.exports = class Validator
 
   subscribe:
     params:
-      trigger_key: Joi.string().required()
+      trigger_point: Joi.string().required()
     payload:
       emails: Joi.array().items( Joi.string().email() ).required()
 
   post:
     params:
-      trigger_key: Joi.string().required()
+      trigger_point: Joi.string().required()
     payload:
       data: Joi.object().required()
       email: Joi.string().email()
@@ -19,4 +19,4 @@ module.exports = class Validator
     params:
       email: Joi.string().email().required()
     payload:
-      triggers: Joi.array().items( Joi.string() ).required()
+      trigger_points: Joi.array().items( Joi.string() ).required()

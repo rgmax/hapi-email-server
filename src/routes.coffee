@@ -7,16 +7,16 @@ module.exports = (server, options) ->
   [
     {
       method: "POST"
-      path: "/v1/trigger/{trigger_key}/subscribe"
+      path: "/v1/trigger/{trigger_point}/subscribe"
       config:
         handler: Trigger.subscribe
         validate: TriggerValidator::subscribe
-        description: "Subscribes a list of emails to a trigger key"
+        description: "Subscribes a list of emails to a trigger point"
         label: ['email']
     }
     {
       method: "POST"
-      path: "/v1/trigger/{trigger_key}/post"
+      path: "/v1/trigger/{trigger_point}/post"
       config:
         handler: Trigger.post
         validate: TriggerValidator::post
@@ -29,7 +29,7 @@ module.exports = (server, options) ->
       config:
         handler: Trigger.unsubscribe
         validate: TriggerValidator::unsubscribe
-        description: "Unsubscribes an email from a list of trigger keys"
+        description: "Unsubscribes an email from a list of trigger points"
         label: ["email"]
     }
   ]
