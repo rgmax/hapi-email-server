@@ -1,7 +1,7 @@
 # Post Office
 ## Hapi Email Server
 
-[Post Office]() is using couchbase with puffer library to register trigger points for emails and send emails to both list of subscribers and an email
+[Post Office](https://www.npmjs.com/package/postoffice) is using couchbase with puffer library to register trigger points for emails and send emails to both list of subscribers and an email
 
 * Source code is available at [here](https://github.com/rgmax/postoffice)
 
