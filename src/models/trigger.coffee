@@ -6,7 +6,7 @@ Path = require 'path'
 module.exports = (server, options) ->
 
   bucket = options.database
-  mailgun = require('mailgun-js') { apiKey: options.mailgun.api_key, domain: options.mailgun.domain }
+  mailgun = require('mailgun-js') { apiKey: options.config.api_key, domain: options.config.domain }
 
   return class Trigger
 
@@ -49,7 +49,7 @@ module.exports = (server, options) ->
 
     @send: (email_data) ->
       deferred = Q.defer()
-      if options.mock
+      if options.config.mock
         console.log "From: #{email_data.from}"
         console.log "To: #{email_data.to}"
         console.log "Subject: #{email_data.subject}"
@@ -77,7 +77,7 @@ module.exports = (server, options) ->
     @get_trigger_event: (trigger_point) ->
       parts = trigger_point.split(":")
       trigger_event = parts[ parts.length - 1 ]
-      trigger_events = _.keys options.trigger_events
+      trigger_events = _.keys options.config.trigger_events
       return Q( new Error("Trigger event '#{trigger_event}' is not defined!") ) if trigger_events.indexOf(trigger_event) < 0
       Q trigger_event
 
@@ -89,13 +89,13 @@ module.exports = (server, options) ->
         d.value.subscribers
 
     @render_emails_data: (trigger_event, data, emails) ->
-      template = Path.join options.root, options.trigger_events[trigger_event].template
+      template = Path.join options.config.root, options.config.trigger_events[trigger_event].template
       html = jade.renderFile template, _.extend({}, data, { base: options.url, scheme: options.scheme } )
-      subject = options.trigger_events[trigger_event].subject
+      subject = options.config.trigger_events[trigger_event].subject
       emails_data = []
       _.each emails, (email) ->
         emails_data.push(
-          from: options.from
+          from: options.config.from
           to: email
           subject: subject
           html: html
