@@ -37,10 +37,10 @@ server.register [ { register: require('postoffice'), options: { config: config.s
 
 ## APIs
 ### POST /v1/trigger/{trigger_point}/subscribe
-**payload { emails: ['email1', 'email2', ...] }
+**payload { emails: ['email1', 'email2', ...] }**
 
 ### POST /v1/trigger/{trigger_point}/post
-**payload { data: object, email: 'email_address' }
+**payload { data: object, email: 'email_address' }**
 
 ### POST /v1/email/{email}/unsubscribe
-**payload { trigger_points: [ 'trigger_point1', 'trigger_point2', ...] }
+**payload { trigger_points: [ 'trigger_point1', 'trigger_point2', ...] }**
