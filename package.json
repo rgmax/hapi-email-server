@@ -1,5 +1,5 @@
 {
-  "name": "hapi-email-server",
+  "name": "postoffice",
   "version": "1.0.0",
   "description": "Hapi Email Server as a plugin",
   "main": "build/main",
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/rgmax/hapi-email-server"
+    "url": "https://github.com/rgmax/postoffice"
   },
   "scripts": {
     "test": "\"echo \\\"Error: no test specified\\\" && exit 1\""
@@ -28,8 +28,11 @@
     "gulp-coffee": "^2.3.2"
   },
   "dependencies": {
+    "jade": "^1.11.0",
     "joi": "^9.1.1",
     "lodash": "^4.16.4",
+    "mailgun-js": "^0.7.12",
+    "path": "^0.12.7",
     "q": "^1.4.1"
   }
 }
