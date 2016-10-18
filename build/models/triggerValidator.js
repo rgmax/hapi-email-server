@@ -15,6 +15,12 @@
       }
     };
 
+    Validator.prototype.subscribers = {
+      params: {
+        trigger_point: Joi.string().required()
+      }
+    };
+
     Validator.prototype.post = {
       params: {
         trigger_point: Joi.string().required()

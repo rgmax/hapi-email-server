@@ -14,6 +14,22 @@
           return reply.success(true);
         });
       },
+      subscribers: function(request, reply) {
+        var trigger_point;
+        trigger_point = request.params.trigger_point;
+        return Trigger.get_subscribers(trigger_point).then(function(result) {
+          if (result instanceof Error) {
+            return reply.nice({
+              list: [],
+              total: 0
+            });
+          }
+          return reply.nice({
+            list: result,
+            total: result.length
+          });
+        });
+      },
       post: function(request, reply) {
         var data, email, trigger_point;
         trigger_point = request.params.trigger_point;

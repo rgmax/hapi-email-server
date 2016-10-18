@@ -15,6 +15,15 @@ module.exports = (server, options) ->
         tags: ["email"]
     }
     {
+      method: "GET"
+      path: "/v1/trigger/{trigger_point}/subscribers"
+      config:
+        handler: Trigger.subscribers
+        validate: TriggerValidator::subscribers
+        description: "Gets a list of subscribed emails for a trigger point"
+        tags: ["email"]
+    }
+    {
       method: "POST"
       path: "/v1/trigger/{trigger_point}/post"
       config:

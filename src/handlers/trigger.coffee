@@ -11,6 +11,13 @@ module.exports = (server, options) ->
         return reply.fail(result.message) if result instanceof Error
         reply.success(true)
 
+    subscribers: (request, reply) ->
+      trigger_point = request.params.trigger_point
+      Trigger.get_subscribers(trigger_point)
+      .then (result) ->
+        return reply.nice { list: [], total: 0 } if result instanceof Error
+        reply.nice { list: result, total: result.length }
+
     post: (request, reply) ->
       trigger_point = request.params.trigger_point
       data = request.payload.data
