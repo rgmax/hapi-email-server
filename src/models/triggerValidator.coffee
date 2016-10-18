@@ -6,7 +6,7 @@ module.exports = class Validator
     params:
       trigger_point: Joi.string().required()
     payload:
-      emails: Joi.array().items( Joi.string().email() ).required()
+      emails: Joi.array().required()
 
   post:
     params:
