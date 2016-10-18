@@ -101,18 +101,22 @@
       };
 
       Trigger.check_if_email_unsubscribed = function(email, trigger_point) {
-        var key;
-        key = this._unsubscribe_key(email);
-        return bucket.get(key).then(function(d) {
-          var trigger_points;
-          if (d instanceof Error) {
-            return false;
-          }
-          trigger_points = d.value.trigger_points;
+        return this.get_email_unsubscribes(email).then(function(trigger_points) {
           if (trigger_points.indexOf(trigger_point) >= 0) {
             return true;
           }
           return false;
+        });
+      };
+
+      Trigger.get_email_unsubscribes = function(email) {
+        var key;
+        key = this._unsubscribe_key(email);
+        return bucket.get(key).then(function(d) {
+          if (d instanceof Error) {
+            return [];
+          }
+          return d.value.trigger_points;
         });
       };
 

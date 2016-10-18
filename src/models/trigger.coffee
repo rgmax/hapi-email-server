@@ -68,13 +68,17 @@ module.exports = (server, options) ->
       deferred.promise
 
     @check_if_email_unsubscribed: (email, trigger_point) ->
+      @get_email_unsubscribes(email)
+      .then (trigger_points) ->
+        return true if trigger_points.indexOf(trigger_point) >= 0
+        false
+
+    @get_email_unsubscribes: (email) ->
       key = @_unsubscribe_key(email)
       bucket.get(key)
       .then (d) ->
-        return false if d instanceof Error
-        trigger_points = d.value.trigger_points
-        return true if trigger_points.indexOf(trigger_point) >= 0
-        false
+        return [] if d instanceof Error
+        d.value.trigger_points
 
     @unsubscribe: (email, trigger_points) ->
       key = @_unsubscribe_key(email)

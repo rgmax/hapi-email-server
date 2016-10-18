@@ -34,6 +34,12 @@
       }
     };
 
+    Validator.prototype.unsubscribe_list = {
+      params: {
+        email: Joi.string().email().required()
+      }
+    };
+
     return Validator;
 
   })();

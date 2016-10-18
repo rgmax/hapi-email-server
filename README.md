@@ -44,3 +44,5 @@ server.register [ { register: require('postoffice'), options: { config: config.s
 
 ### POST /v1/email/{email}/unsubscribe
 **payload { trigger_points: [ 'trigger_point1', 'trigger_point2', ...] }**
+
+### GET /v1/email/{email}/unsubscribe_list
