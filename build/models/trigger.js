@@ -53,8 +53,13 @@
             return trigger_event;
           }
           if (email != null) {
-            return _this.render_emails_data(trigger_event, data, [email]).then(function(emails_data) {
-              return _this.send(emails_data[0]);
+            return _this.check_if_email_unsubscribed(email, trigger_point).then(function(unsubscribed) {
+              if (unsubscribed) {
+                return new Error("Email has un-subscribed from trigger point: " + trigger_point);
+              }
+              return _this.render_emails_data(trigger_event, data, [email]).then(function(emails_data) {
+                return _this.send(emails_data[0]);
+              });
             });
           } else {
             return _this.get_subscribers(trigger_point).then(function(emails) {
@@ -93,6 +98,22 @@
           });
         }
         return deferred.promise;
+      };
+
+      Trigger.check_if_email_unsubscribed = function(email, trigger_point) {
+        var key;
+        key = this._unsubscribe_key(email);
+        return bucket.get(key).then(function(d) {
+          var trigger_points;
+          if (d instanceof Error) {
+            return false;
+          }
+          trigger_points = d.value.trigger_points;
+          if (trigger_points.indexOf(trigger_point) >= 0) {
+            return true;
+          }
+          return false;
+        });
       };
 
       Trigger.unsubscribe = function(email, trigger_points) {

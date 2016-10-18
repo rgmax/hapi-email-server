@@ -33,9 +33,12 @@ module.exports = (server, options) ->
       .then (trigger_event) ->
         return trigger_event if trigger_event instanceof Error
         if email?
-          _this.render_emails_data(trigger_event, data, [email])
-          .then (emails_data) ->
-            _this.send(emails_data[0])
+          _this.check_if_email_unsubscribed(email, trigger_point)
+          .then (unsubscribed) ->
+            return new Error("Email has un-subscribed from trigger point: #{trigger_point}") if unsubscribed
+            _this.render_emails_data(trigger_event, data, [email])
+            .then (emails_data) ->
+              _this.send(emails_data[0])
         else
           _this.get_subscribers(trigger_point)
           .then (emails) ->
@@ -63,6 +66,15 @@ module.exports = (server, options) ->
             else
               deferred.resolve body
       deferred.promise
+
+    @check_if_email_unsubscribed: (email, trigger_point) ->
+      key = @_unsubscribe_key(email)
+      bucket.get(key)
+      .then (d) ->
+        return false if d instanceof Error
+        trigger_points = d.value.trigger_points
+        return true if trigger_points.indexOf(trigger_point) >= 0
+        false
 
     @unsubscribe: (email, trigger_points) ->
       key = @_unsubscribe_key(email)
