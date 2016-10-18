@@ -11,7 +11,7 @@
         method: "POST",
         path: "/v1/trigger/{trigger_point}/subscribe",
         config: {
-          handler: Trigger.subscribe,
+          handler: Trigger.trigger.subscribe,
           validate: TriggerValidator.prototype.subscribe,
           description: "Subscribes a list of emails to a trigger point",
           label: ['email']
@@ -20,7 +20,7 @@
         method: "POST",
         path: "/v1/trigger/{trigger_point}/post",
         config: {
-          handler: Trigger.post,
+          handler: Trigger.trigger.post,
           validate: TriggerValidator.prototype.post,
           description: "Posts an email to addresses of a trigger point",
           label: ["email"]
@@ -29,7 +29,7 @@
         method: "POST",
         path: "/v1/email/{email}/unsubscribe",
         config: {
-          handler: Trigger.unsubscribe,
+          handler: Trigger.trigger.unsubscribe,
           validate: TriggerValidator.prototype.unsubscribe,
           description: "Unsubscribes an email from a list of trigger points",
           label: ["email"]
