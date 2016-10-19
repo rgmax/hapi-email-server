@@ -42,7 +42,7 @@
         email: Joi.string().email().required()
       },
       payload: {
-        trigger_points: Joi.array().items(Joi.string()).required()
+        trigger_points: Joi.array().items(Joi.string())
       }
     };
 

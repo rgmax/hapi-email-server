@@ -55,7 +55,7 @@
       unsubscribe: function(request, reply) {
         var email, trigger_points;
         email = request.params.email;
-        trigger_points = request.payload.trigger_points;
+        trigger_points = request.payload.trigger_points != null ? request.payload.trigger_points : [];
         return Trigger.unsubscribe(email, trigger_points).then(function(result) {
           if (result instanceof Error) {
             return reply.fail(result.message);

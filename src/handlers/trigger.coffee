@@ -36,7 +36,7 @@ module.exports = (server, options) ->
 
     unsubscribe: (request, reply) ->
       email = request.params.email
-      trigger_points = request.payload.trigger_points
+      trigger_points = if request.payload.trigger_points? then request.payload.trigger_points else []
       Trigger.unsubscribe(email, trigger_points)
       .then (result) ->
         return reply.fail(result.message) if result instanceof Error

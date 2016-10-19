@@ -81,6 +81,7 @@ module.exports = (server, options) ->
         d.value.trigger_points
 
     @unsubscribe: (email, trigger_points) ->
+      return @delete_all_unsubscribe(email) if trigger_points.length is 0
       key = @_unsubscribe_key(email)
       _this = @
       promises = []
@@ -99,6 +100,16 @@ module.exports = (server, options) ->
             bucket.insert(key, doc)
           else
             bucket.replace(key, doc)
+
+    @delete_all_unsubscribe: (email) ->
+      key = @_unsubscribe_key(email)
+      doc = { trigger_points: [] }
+      bucket.get(key)
+      .then (d) ->
+        if d instanceof Error
+          bucket.insert(key, doc)
+        else
+          bucket.replace(key, doc)
 
     @get_trigger_event: (trigger_point) ->
       parts = trigger_point.split(":")

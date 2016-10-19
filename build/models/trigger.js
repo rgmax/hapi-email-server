@@ -122,6 +122,9 @@
 
       Trigger.unsubscribe = function(email, trigger_points) {
         var _this, key, promises;
+        if (trigger_points.length === 0) {
+          return this.delete_all_unsubscribe(email);
+        }
         key = this._unsubscribe_key(email);
         _this = this;
         promises = [];
@@ -149,6 +152,21 @@
               return bucket.replace(key, doc);
             }
           });
+        });
+      };
+
+      Trigger.delete_all_unsubscribe = function(email) {
+        var doc, key;
+        key = this._unsubscribe_key(email);
+        doc = {
+          trigger_points: []
+        };
+        return bucket.get(key).then(function(d) {
+          if (d instanceof Error) {
+            return bucket.insert(key, doc);
+          } else {
+            return bucket.replace(key, doc);
+          }
         });
       };
 
