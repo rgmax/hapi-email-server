@@ -121,17 +121,34 @@
       };
 
       Trigger.unsubscribe = function(email, trigger_points) {
-        var doc, key;
+        var _this, key, promises;
         key = this._unsubscribe_key(email);
-        doc = {
-          trigger_points: trigger_points
-        };
-        return bucket.get(key).then(function(d) {
-          if (d instanceof Error) {
-            return bucket.insert(key, doc);
-          } else {
-            return bucket.replace(key, doc);
+        _this = this;
+        promises = [];
+        _.each(trigger_points, function(trigger_point) {
+          return promises.push(_this.get_trigger_event(trigger_point));
+        });
+        return Q.all(promises).then(function(results) {
+          var doc, error_found;
+          error_found = false;
+          _.each(results, function(result) {
+            if (result instanceof Error) {
+              return error_found = true;
+            }
+          });
+          if (error_found) {
+            return new Error('List contains unknown trigger events.');
           }
+          doc = {
+            trigger_points: trigger_points
+          };
+          return bucket.get(key).then(function(d) {
+            if (d instanceof Error) {
+              return bucket.insert(key, doc);
+            } else {
+              return bucket.replace(key, doc);
+            }
+          });
         });
       };
 
@@ -154,6 +171,28 @@
             return new Error("There isn't any subscriber for trigger point: " + trigger_point);
           }
           return d.value.subscribers;
+        });
+      };
+
+      Trigger.delete_all_subscribers = function(trigger_point) {
+        var _this;
+        _this = this;
+        return this.get_trigger_event(trigger_point).then(function(trigger_event) {
+          var doc, trigger_key;
+          if (trigger_event instanceof Error) {
+            return trigger_event;
+          }
+          trigger_key = _this._trigger_key(trigger_point);
+          doc = {
+            subscribers: []
+          };
+          return bucket.get(trigger_key).then(function(d) {
+            if (d instanceof Error) {
+              return bucket.insert(trigger_key, doc);
+            } else {
+              return bucket.replace(trigger_key, doc);
+            }
+          });
         });
       };
 

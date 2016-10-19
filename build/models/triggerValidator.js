@@ -15,6 +15,12 @@
       }
     };
 
+    Validator.prototype.delete_all_subscribers = {
+      params: {
+        trigger_point: Joi.string().required()
+      }
+    };
+
     Validator.prototype.subscribers = {
       params: {
         trigger_point: Joi.string().required()

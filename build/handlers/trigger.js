@@ -14,6 +14,16 @@
           return reply.success(true);
         });
       },
+      delete_all_subscribers: function(request, reply) {
+        var trigger_point;
+        trigger_point = request.params.trigger_point;
+        return Trigger.delete_all_subscribers(trigger_point).then(function(result) {
+          if (result instanceof Error) {
+            return reply.fail(result.message);
+          }
+          return reply.success(true);
+        });
+      },
       subscribers: function(request, reply) {
         var trigger_point;
         trigger_point = request.params.trigger_point;
