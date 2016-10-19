@@ -8,6 +8,10 @@ module.exports = class Validator
     payload:
       emails: Joi.array().items( Joi.string().email() ).required()
 
+  delete_all_subscribers:
+    params:
+      trigger_point: Joi.string().required()
+
   subscribers:
     params:
       trigger_point: Joi.string().required()

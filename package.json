@@ -1,6 +1,6 @@
 {
   "name": "postoffice",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Hapi Email Server as a plugin",
   "main": "build/main",
   "peerDependencies": {

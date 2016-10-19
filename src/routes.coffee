@@ -15,6 +15,15 @@ module.exports = (server, options) ->
         tags: ["email"]
     }
     {
+      method: "DELETE"
+      path: "/v1/trigger/{trigger_point}/subscribers"
+      config:
+        handler: Trigger.delete_all_subscribers
+        validate: TriggerValidator::delete_all_subscribers
+        description: "Deletes all subscribed emails of a trigger point"
+        tags: ["email"]
+    }
+    {
       method: "GET"
       path: "/v1/trigger/{trigger_point}/subscribers"
       config:

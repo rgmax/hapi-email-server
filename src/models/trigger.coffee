@@ -82,13 +82,23 @@ module.exports = (server, options) ->
 
     @unsubscribe: (email, trigger_points) ->
       key = @_unsubscribe_key(email)
-      doc = { trigger_points: trigger_points }
-      bucket.get(key)
-      .then (d) ->
-        if d instanceof Error
-          bucket.insert(key, doc)
-        else
-          bucket.replace(key, doc)
+      _this = @
+      promises = []
+      _.each trigger_points, (trigger_point) ->
+        promises.push _this.get_trigger_event(trigger_point)
+      Q.all(promises)
+      .then (results) ->
+        error_found = false
+        _.each results, (result) ->
+          error_found = true if result instanceof Error
+        return new Error('List contains unknown trigger events.') if error_found
+        doc = { trigger_points: trigger_points }
+        bucket.get(key)
+        .then (d) ->
+          if d instanceof Error
+            bucket.insert(key, doc)
+          else
+            bucket.replace(key, doc)
 
     @get_trigger_event: (trigger_point) ->
       parts = trigger_point.split(":")
@@ -103,6 +113,20 @@ module.exports = (server, options) ->
       .then (d) ->
         return new Error("There isn't any subscriber for trigger point: #{trigger_point}") if d instanceof Error or d.value.subscribers.length is 0
         d.value.subscribers
+
+    @delete_all_subscribers: (trigger_point) ->
+      _this = @
+      @get_trigger_event(trigger_point)
+      .then (trigger_event) ->
+        return trigger_event if trigger_event instanceof Error
+        trigger_key = _this._trigger_key(trigger_point)
+        doc = { subscribers: [] }
+        bucket.get(trigger_key)
+        .then (d) ->
+          if d instanceof Error
+            bucket.insert(trigger_key, doc)
+          else
+            bucket.replace(trigger_key, doc)
 
     @render_emails_data: (trigger_event, data, emails) ->
       template = Path.join options.config.root, options.config.trigger_events[trigger_event].template

@@ -39,6 +39,8 @@ server.register [ { register: require('postoffice'), options: { config: config.s
 ### POST /v1/trigger/{trigger_point}/subscribe
 **payload { emails: ['email1', 'email2', ...] }**
 
+### DELETE /v1/trigger/{trigger_point}/subscribers
+
 ### GET /v1/trigger/{trigger_point}/subscribers
 
 ### POST /v1/trigger/{trigger_point}/post

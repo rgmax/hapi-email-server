@@ -11,6 +11,13 @@ module.exports = (server, options) ->
         return reply.fail(result.message) if result instanceof Error
         reply.success(true)
 
+    delete_all_subscribers: (request, reply) ->
+      trigger_point = request.params.trigger_point
+      Trigger.delete_all_subscribers(trigger_point)
+      .then (result) ->
+        return reply.fail(result.message) if result instanceof Error
+        reply.success(true)
+
     subscribers: (request, reply) ->
       trigger_point = request.params.trigger_point
       Trigger.get_subscribers(trigger_point)
