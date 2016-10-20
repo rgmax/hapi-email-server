@@ -36,17 +36,17 @@ server.register [ { register: require('postoffice'), options: { config: config.s
 ```
 
 ## APIs
-### POST /v1/trigger/{trigger_point}/subscribe
+### POST /v1/triggers/{trigger_point}/subscribe
 **payload { emails: ['email1', 'email2', ...] }**
 
-### DELETE /v1/trigger/{trigger_point}/subscribers
+### DELETE /v1/triggers/{trigger_point}/subscribers
 
-### GET /v1/trigger/{trigger_point}/subscribers
+### GET /v1/triggers/{trigger_point}/subscribers
 
-### POST /v1/trigger/{trigger_point}/post
+### POST /v1/triggers/{trigger_point}/post
 **payload { data: object, email: 'email_address' }**
 
-### POST /v1/email/{email}/unsubscribe
+### POST /v1/emails/{email}/unsubscribe
 **payload { trigger_points: [ 'trigger_point1', 'trigger_point2', ...] }**
 
-### GET /v1/email/{email}/unsubscribe_list
+### GET /v1/emails/{email}/unsubscribe_list

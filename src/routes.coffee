@@ -7,7 +7,7 @@ module.exports = (server, options) ->
   [
     {
       method: "POST"
-      path: "/v1/trigger/{trigger_point}/subscribe"
+      path: "/v1/triggers/{trigger_point}/subscribe"
       config:
         handler: Trigger.subscribe
         validate: TriggerValidator::subscribe
@@ -16,7 +16,7 @@ module.exports = (server, options) ->
     }
     {
       method: "DELETE"
-      path: "/v1/trigger/{trigger_point}/subscribers"
+      path: "/v1/triggers/{trigger_point}/subscribers"
       config:
         handler: Trigger.delete_all_subscribers
         validate: TriggerValidator::delete_all_subscribers
@@ -25,7 +25,7 @@ module.exports = (server, options) ->
     }
     {
       method: "GET"
-      path: "/v1/trigger/{trigger_point}/subscribers"
+      path: "/v1/triggers/{trigger_point}/subscribers"
       config:
         handler: Trigger.subscribers
         validate: TriggerValidator::subscribers
@@ -34,7 +34,7 @@ module.exports = (server, options) ->
     }
     {
       method: "POST"
-      path: "/v1/trigger/{trigger_point}/post"
+      path: "/v1/triggers/{trigger_point}/post"
       config:
         handler: Trigger.post
         validate: TriggerValidator::post
@@ -43,7 +43,7 @@ module.exports = (server, options) ->
     }
     {
       method: "POST"
-      path: "/v1/email/{email}/unsubscribe"
+      path: "/v1/emails/{email}/unsubscribe"
       config:
         handler: Trigger.unsubscribe
         validate: TriggerValidator::unsubscribe
@@ -52,7 +52,7 @@ module.exports = (server, options) ->
     }
     {
       method: "GET"
-      path: "/v1/email/{email}/unsubscribe_list"
+      path: "/v1/emails/{email}/unsubscribe_list"
       config:
         handler: Trigger.unsubscribe_list
         validate: TriggerValidator::unsubscribe_list
