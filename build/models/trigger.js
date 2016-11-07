@@ -215,13 +215,13 @@
       };
 
       Trigger.render_emails_data = function(trigger_event, data, emails) {
-        var emails_data, html, subject, template;
+        var emails_data, html, ref, subject, template;
         template = Path.join(options.config.root, options.config.trigger_events[trigger_event].template);
         html = jade.renderFile(template, _.extend({}, data, {
           base: options.url,
           scheme: options.scheme
         }));
-        subject = options.config.trigger_events[trigger_event].subject;
+        subject = ((ref = data.meta) != null ? ref.subject : void 0) != null ? data.meta.subject : options.config.trigger_events[trigger_event].subject;
         emails_data = [];
         _.each(emails, function(email) {
           return emails_data.push({
