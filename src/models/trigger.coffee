@@ -142,7 +142,7 @@ module.exports = (server, options) ->
     @render_emails_data: (trigger_event, data, emails) ->
       template = Path.join options.config.root, options.config.trigger_events[trigger_event].template
       html = jade.renderFile template, _.extend({}, data, { base: options.url, scheme: options.scheme } )
-      subject = options.config.trigger_events[trigger_event].subject
+      subject = if data.meta?.subject? then data.meta.subject else options.config.trigger_events[trigger_event].subject
       emails_data = []
       _.each emails, (email) ->
         emails_data.push(
