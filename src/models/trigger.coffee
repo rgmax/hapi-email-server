@@ -2,6 +2,7 @@ _ = require "lodash"
 Q = require "q"
 jade = require 'jade'
 Path = require 'path'
+fs = require 'fs-extra'
 
 module.exports = (server, options) ->
 
@@ -53,11 +54,22 @@ module.exports = (server, options) ->
     @send: (email_data) ->
       deferred = Q.defer()
       if options.config.mock
-        console.log "From: #{email_data.from}"
-        console.log "To: #{email_data.to}"
-        console.log "Subject: #{email_data.subject}"
-        console.log email_data.html
-        deferred.resolve(true)
+        if options.config.trace
+          console.log "From: #{email_data.from}"
+          console.log "To: #{email_data.to}"
+          console.log "Subject: #{email_data.subject}"
+          console.log email_data.html
+        if options.config.dump
+          file = Path.join options.config.dump_path, "#{email_data.to}_#{email_data.subject}.html"
+          @dir_ensure(file)
+          .then (err) ->
+            fs.writeFile file, email_data.html, (error) ->
+              if error
+                deferred.reject new Error error
+              else
+                deferred.resolve file
+        else
+          deferred.resolve true
       else
         mailgun.messages().send email_data,
           (error, body) ->
@@ -158,3 +170,9 @@ module.exports = (server, options) ->
 
     @_unsubscribe_key: (email) ->
       "#{Trigger::PREFIX}:#{email}:#{Trigger::POSTFIX}"
+
+    @dir_ensure: (path) ->
+      deferred = Q.defer()
+      fs.ensureDir Path.dirname(path), (err) ->
+        deferred.resolve()
+      deferred.promise

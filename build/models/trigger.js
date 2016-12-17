@@ -1,5 +1,5 @@
 (function() {
-  var Path, Q, _, jade;
+  var Path, Q, _, fs, jade;
 
   _ = require("lodash");
 
@@ -8,6 +8,8 @@
   jade = require('jade');
 
   Path = require('path');
+
+  fs = require('fs-extra');
 
   module.exports = function(server, options) {
     var Trigger, bucket, mailgun;
@@ -80,14 +82,29 @@
       };
 
       Trigger.send = function(email_data) {
-        var deferred;
+        var deferred, file;
         deferred = Q.defer();
         if (options.config.mock) {
-          console.log("From: " + email_data.from);
-          console.log("To: " + email_data.to);
-          console.log("Subject: " + email_data.subject);
-          console.log(email_data.html);
-          deferred.resolve(true);
+          if (options.config.trace) {
+            console.log("From: " + email_data.from);
+            console.log("To: " + email_data.to);
+            console.log("Subject: " + email_data.subject);
+            console.log(email_data.html);
+          }
+          if (options.config.dump) {
+            file = Path.join(options.config.dump_path, email_data.to + "_" + email_data.subject + ".html");
+            this.dir_ensure(file).then(function(err) {
+              return fs.writeFile(file, email_data.html, function(error) {
+                if (error) {
+                  return deferred.reject(new Error(error));
+                } else {
+                  return deferred.resolve(file);
+                }
+              });
+            });
+          } else {
+            deferred.resolve(true);
+          }
         } else {
           mailgun.messages().send(email_data, function(error, body) {
             if (error) {
@@ -240,6 +257,15 @@
 
       Trigger._unsubscribe_key = function(email) {
         return Trigger.prototype.PREFIX + ":" + email + ":" + Trigger.prototype.POSTFIX;
+      };
+
+      Trigger.dir_ensure = function(path) {
+        var deferred;
+        deferred = Q.defer();
+        fs.ensureDir(Path.dirname(path), function(err) {
+          return deferred.resolve();
+        });
+        return deferred.promise;
       };
 
       return Trigger;
