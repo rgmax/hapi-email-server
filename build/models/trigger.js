@@ -96,7 +96,7 @@
             this.dir_ensure(file).then(function(err) {
               return fs.writeFile(file, email_data.html, function(error) {
                 if (error) {
-                  return deferred.reject(new Error(error));
+                  return deferred.resolve(new Error(error));
                 } else {
                   return deferred.resolve(file);
                 }
@@ -108,7 +108,7 @@
         } else {
           mailgun.messages().send(email_data, function(error, body) {
             if (error) {
-              return deferred.reject(new Error(error));
+              return deferred.resolve(new Error(error));
             } else {
               return deferred.resolve(body);
             }

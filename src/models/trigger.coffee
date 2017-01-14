@@ -65,7 +65,7 @@ module.exports = (server, options) ->
           .then (err) ->
             fs.writeFile file, email_data.html, (error) ->
               if error
-                deferred.reject new Error error
+                deferred.resolve new Error error
               else
                 deferred.resolve file
         else
@@ -74,7 +74,7 @@ module.exports = (server, options) ->
         mailgun.messages().send email_data,
           (error, body) ->
             if error
-              deferred.reject new Error error
+              deferred.resolve new Error error
             else
               deferred.resolve body
       deferred.promise
