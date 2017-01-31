@@ -31,8 +31,8 @@ module.exports = (server, options) ->
       trigger_point = request.params.trigger_point
       data = request.payload.data
       email = request.payload.email
-      emails = [ email ] unless _.isArray email
-      Trigger.post(trigger_point, data, emails)
+      email = [ email ] unless _.isArray email
+      Trigger.post(trigger_point, data, email)
       .then (result) ->
         return reply.fail(result.message) if result instanceof Error
         reply.success(true)

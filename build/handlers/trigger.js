@@ -45,14 +45,14 @@
         });
       },
       post: function(request, reply) {
-        var data, email, emails, trigger_point;
+        var data, email, trigger_point;
         trigger_point = request.params.trigger_point;
         data = request.payload.data;
         email = request.payload.email;
         if (!_.isArray(email)) {
-          emails = [email];
+          email = [email];
         }
-        return Trigger.post(trigger_point, data, emails).then(function(result) {
+        return Trigger.post(trigger_point, data, email).then(function(result) {
           if (result instanceof Error) {
             return reply.fail(result.message);
           }
