@@ -33,7 +33,7 @@
       },
       payload: {
         data: Joi.object().required(),
-        email: Joi.string().email()
+        email: Joi.alternatives()["try"](Joi.string().email(), Joi.array().items(Joi.string().email()))
       }
     };
 

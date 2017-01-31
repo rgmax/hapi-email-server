@@ -47,20 +47,34 @@
         });
       };
 
-      Trigger.post = function(trigger_point, data, email) {
+      Trigger.post = function(trigger_point, data, emails) {
         var _this;
         _this = this;
         return this.get_trigger_event(trigger_point).then(function(trigger_event) {
+          var promises, subscribed_emails;
           if (trigger_event instanceof Error) {
             return trigger_event;
           }
-          if (email != null) {
-            return _this.check_if_email_unsubscribed(email, trigger_point).then(function(unsubscribed) {
-              if (unsubscribed) {
-                return new Error("Email has un-subscribed from trigger point: " + trigger_point);
+          if (emails != null) {
+            promises = [];
+            subscribed_emails = [];
+            _.each(emails, function(email) {
+              return promises.push(_this.check_if_email_unsubscribed(email, trigger_point).then(function(unsubscribed) {
+                if (!unsubscribed) {
+                  return subscribed_emails.push(email);
+                }
+              }));
+            });
+            return Q.all(promises).then(function() {
+              if (subscribed_emails.length === 0) {
+                return new Error("All emails have un-subscribed from trigger point: " + trigger_point);
               }
-              return _this.render_emails_data(trigger_event, data, [email]).then(function(emails_data) {
-                return _this.send(emails_data[0]);
+              return _this.render_emails_data(trigger_event, data, subscribed_emails).then(function(emails_data) {
+                promises = [];
+                _.each(emails_data, function(email_data) {
+                  return promises.push(_this.send(email_data));
+                });
+                return Q.all(promises);
               });
             });
           } else {
@@ -69,7 +83,6 @@
                 return emails;
               }
               return _this.render_emails_data(trigger_event, data, emails).then(function(emails_data) {
-                var promises;
                 promises = [];
                 _.each(emails_data, function(email_data) {
                   return promises.push(_this.send(email_data));

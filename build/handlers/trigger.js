@@ -1,4 +1,8 @@
 (function() {
+  var _;
+
+  _ = require('lodash');
+
   module.exports = function(server, options) {
     var Trigger;
     Trigger = require("../models/trigger")(server, options);
@@ -41,16 +45,19 @@
         });
       },
       post: function(request, reply) {
-        var data, email, trigger_point;
+        var data, email, emails, trigger_point;
         trigger_point = request.params.trigger_point;
         data = request.payload.data;
         email = request.payload.email;
-        return Trigger.post(trigger_point, data, email).then(function(result) {
+        if (!_.isArray(email)) {
+          emails = [email];
+        }
+        return Trigger.post(trigger_point, data, emails).then(function(result) {
           if (result instanceof Error) {
             return reply.fail(result.message);
           }
           return reply.success(true);
-        });
+        }).done();
       },
       unsubscribe: function(request, reply) {
         var email, trigger_points;

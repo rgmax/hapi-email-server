@@ -21,7 +21,10 @@ module.exports = class Validator
       trigger_point: Joi.string().required()
     payload:
       data: Joi.object().required()
-      email: Joi.string().email()
+      email: Joi.alternatives().try(
+        Joi.string().email(),
+        Joi.array().items( Joi.string().email() )
+      )
 
   unsubscribe:
     params:

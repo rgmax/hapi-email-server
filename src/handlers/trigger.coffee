@@ -1,3 +1,5 @@
+_ = require 'lodash'
+
 module.exports = (server, options) ->
 
   Trigger = require("../models/trigger") server, options
@@ -29,10 +31,12 @@ module.exports = (server, options) ->
       trigger_point = request.params.trigger_point
       data = request.payload.data
       email = request.payload.email
-      Trigger.post(trigger_point, data, email)
+      emails = [ email ] unless _.isArray email
+      Trigger.post(trigger_point, data, emails)
       .then (result) ->
         return reply.fail(result.message) if result instanceof Error
         reply.success(true)
+      .done()
 
     unsubscribe: (request, reply) ->
       email = request.params.email

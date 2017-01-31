@@ -28,18 +28,29 @@ module.exports = (server, options) ->
           else
             bucket.replace(trigger_key, doc)
 
-    @post: (trigger_point, data, email) ->
+    @post: (trigger_point, data, emails) ->
       _this = @
       @get_trigger_event(trigger_point)
       .then (trigger_event) ->
         return trigger_event if trigger_event instanceof Error
-        if email?
-          _this.check_if_email_unsubscribed(email, trigger_point)
-          .then (unsubscribed) ->
-            return new Error("Email has un-subscribed from trigger point: #{trigger_point}") if unsubscribed
-            _this.render_emails_data(trigger_event, data, [email])
+        if emails?
+          promises = []
+          subscribed_emails = []
+          _.each emails, (email) ->
+            promises.push(
+              _this.check_if_email_unsubscribed(email, trigger_point)
+              .then (unsubscribed) ->
+                subscribed_emails.push email unless unsubscribed
+            )
+          Q.all(promises)
+          .then ->
+            return new Error("All emails have un-subscribed from trigger point: #{trigger_point}") if subscribed_emails.length is 0
+            _this.render_emails_data(trigger_event, data, subscribed_emails)
             .then (emails_data) ->
-              _this.send(emails_data[0])
+              promises = []
+              _.each emails_data, (email_data) ->
+                promises.push _this.send(email_data)
+              Q.all(promises)
         else
           _this.get_subscribers(trigger_point)
           .then (emails) ->
