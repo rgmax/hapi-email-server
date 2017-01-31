@@ -241,12 +241,21 @@
         subject = ((ref = data.meta) != null ? ref.subject : void 0) != null ? data.meta.subject : options.config.trigger_events[trigger_event].subject;
         emails_data = [];
         _.each(emails, function(email) {
-          return emails_data.push({
+          var email_data;
+          email_data = {
             from: options.config.from,
             to: email,
             subject: subject,
             html: html
-          });
+          };
+          if (data.attachment != null) {
+            if (typeof data.attachment === 'object') {
+              email_data.attachment = new mailgun.Attachment(data.attachment);
+            } else {
+              email_data.attachment = data.attachment;
+            }
+          }
+          return emails_data.push(email_data);
         });
         return Q(emails_data);
       };
