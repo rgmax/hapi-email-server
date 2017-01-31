@@ -157,12 +157,17 @@ module.exports = (server, options) ->
       subject = if data.meta?.subject? then data.meta.subject else options.config.trigger_events[trigger_event].subject
       emails_data = []
       _.each emails, (email) ->
-        emails_data.push(
+        email_data =
           from: options.config.from
           to: email
           subject: subject
           html: html
-        )
+        if data.attachment?
+          if typeof data.attachment is 'object'
+            email_data.attachment =  new mailgun.Attachment data.attachment
+          else
+            email_data.attachment = data.attachment
+        emails_data.push email_data
       Q emails_data
 
     @_trigger_key: (trigger_point) ->
