@@ -49,7 +49,7 @@
         trigger_point = request.params.trigger_point;
         data = request.payload.data;
         email = request.payload.email;
-        if (!_.isArray(email)) {
+        if ((email != null) && _.isArray(email) === false) {
           email = [email];
         }
         return Trigger.post(trigger_point, data, email).then(function(result) {
