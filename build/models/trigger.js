@@ -245,32 +245,50 @@
       };
 
       Trigger.render_emails_data = function(trigger_event, data, emails) {
-        var emails_data, html, ref, subject, template;
-        template = Path.join(options.config.root, options.config.trigger_events[trigger_event].template);
-        html = jade.renderFile(template, _.extend({}, data, {
-          base: options.url,
-          scheme: options.scheme
-        }));
-        subject = ((ref = data.meta) != null ? ref.subject : void 0) != null ? data.meta.subject : options.config.trigger_events[trigger_event].subject;
-        emails_data = [];
-        _.each(emails, function(email) {
-          var email_data;
-          email_data = {
-            from: options.config.from,
-            to: email,
-            subject: subject,
-            html: html
-          };
-          if (data.attachment != null) {
-            if (typeof data.attachment === 'object') {
-              email_data.attachment = new mailgun.Attachment(data.attachment);
-            } else {
-              email_data.attachment = data.attachment;
+        var set_template;
+        set_template = (function(_this) {
+          return function(data) {
+            var config_template, payload_template, ref;
+            config_template = Path.join(options.config.root, options.config.trigger_events[trigger_event].template);
+            if (((ref = data.meta) != null ? ref.template : void 0) == null) {
+              return Q(config_template);
             }
-          }
-          return emails_data.push(email_data);
+            payload_template = Path.join(options.config.root, data.meta.template);
+            return _this.path_exists(payload_template).then(function(err) {
+              if (err) {
+                return Q(config_template);
+              }
+              return Q(payload_template);
+            });
+          };
+        })(this);
+        return set_template(data).then(function(template) {
+          var emails_data, html, ref, subject;
+          html = jade.renderFile(template, _.extend({}, data, {
+            base: options.url,
+            scheme: options.scheme
+          }));
+          subject = ((ref = data.meta) != null ? ref.subject : void 0) != null ? data.meta.subject : options.config.trigger_events[trigger_event].subject;
+          emails_data = [];
+          _.each(emails, function(email) {
+            var email_data;
+            email_data = {
+              from: options.config.from,
+              to: email,
+              subject: subject,
+              html: html
+            };
+            if (data.attachment != null) {
+              if (typeof data.attachment === 'object') {
+                email_data.attachment = new mailgun.Attachment(data.attachment);
+              } else {
+                email_data.attachment = data.attachment;
+              }
+            }
+            return emails_data.push(email_data);
+          });
+          return Q(emails_data);
         });
-        return Q(emails_data);
       };
 
       Trigger._trigger_key = function(trigger_point) {
@@ -286,6 +304,15 @@
         deferred = Q.defer();
         fs.ensureDir(Path.dirname(path), function(err) {
           return deferred.resolve();
+        });
+        return deferred.promise;
+      };
+
+      Trigger.path_exists = function(path) {
+        var deferred;
+        deferred = Q.defer();
+        fs.access(path, fs.F_OK | fs.R_OK, function(err) {
+          return deferred.resolve(err);
         });
         return deferred.promise;
       };

@@ -163,23 +163,32 @@ module.exports = (server, options) ->
             bucket.replace(trigger_key, doc)
 
     @render_emails_data: (trigger_event, data, emails) ->
-      template = Path.join options.config.root, options.config.trigger_events[trigger_event].template
-      html = jade.renderFile template, _.extend({}, data, { base: options.url, scheme: options.scheme } )
-      subject = if data.meta?.subject? then data.meta.subject else options.config.trigger_events[trigger_event].subject
-      emails_data = []
-      _.each emails, (email) ->
-        email_data =
-          from: options.config.from
-          to: email
-          subject: subject
-          html: html
-        if data.attachment?
-          if typeof data.attachment is 'object'
-            email_data.attachment =  new mailgun.Attachment data.attachment
-          else
-            email_data.attachment = data.attachment
-        emails_data.push email_data
-      Q emails_data
+      set_template = (data) =>
+        config_template = Path.join options.config.root, options.config.trigger_events[trigger_event].template
+        return Q(config_template) unless data.meta?.template?
+        payload_template = Path.join options.config.root, data.meta.template
+        @path_exists(payload_template)
+        .then (err) ->
+          return Q(config_template) if err
+          Q(payload_template)
+      set_template(data)
+      .then (template) ->
+        html = jade.renderFile template, _.extend({}, data, { base: options.url, scheme: options.scheme } )
+        subject = if data.meta?.subject? then data.meta.subject else options.config.trigger_events[trigger_event].subject
+        emails_data = []
+        _.each emails, (email) ->
+          email_data =
+            from: options.config.from
+            to: email
+            subject: subject
+            html: html
+          if data.attachment?
+            if typeof data.attachment is 'object'
+              email_data.attachment =  new mailgun.Attachment data.attachment
+            else
+              email_data.attachment = data.attachment
+          emails_data.push email_data
+        Q emails_data
 
     @_trigger_key: (trigger_point) ->
       "#{Trigger::PREFIX}:#{trigger_point}"
@@ -191,4 +200,10 @@ module.exports = (server, options) ->
       deferred = Q.defer()
       fs.ensureDir Path.dirname(path), (err) ->
         deferred.resolve()
+      deferred.promise
+
+    @path_exists: (path) ->
+      deferred = Q.defer()
+      fs.access path, fs.F_OK | fs.R_OK, (err) ->
+        deferred.resolve(err)
       deferred.promise
