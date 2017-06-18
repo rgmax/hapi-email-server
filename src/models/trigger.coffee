@@ -32,6 +32,7 @@ module.exports = (server, options) ->
 
     @post: (trigger_point, data, emails) ->
       _this = @
+      system = if data.meta?.system? then data.meta.system else null
       @get_trigger_event(trigger_point)
       .then (trigger_event) ->
         return trigger_event if trigger_event instanceof Error
@@ -47,13 +48,13 @@ module.exports = (server, options) ->
           Q.all(promises)
           .then ->
             return new Error("All emails have un-subscribed from trigger point: #{trigger_point}") if subscribed_emails.length is 0
-            switch data.meta.system
+            switch system
               when 'mandrill'
                 _this.mandrill_send(data, subscribed_emails)
               else
                 _this.mailgun_send_to_emails(trigger_event, data, subscribed_emails)
         else
-          switch data.meta.system
+          switch system
             when 'mandrill'
               _this.get_subscribers(trigger_point)
                 .then (emails) ->

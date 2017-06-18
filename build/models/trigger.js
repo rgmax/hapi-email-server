@@ -51,8 +51,9 @@
       };
 
       Trigger.post = function(trigger_point, data, emails) {
-        var _this;
+        var _this, ref, system;
         _this = this;
+        system = ((ref = data.meta) != null ? ref.system : void 0) != null ? data.meta.system : null;
         return this.get_trigger_event(trigger_point).then(function(trigger_event) {
           var promises, subscribed_emails;
           if (trigger_event instanceof Error) {
@@ -72,7 +73,7 @@
               if (subscribed_emails.length === 0) {
                 return new Error("All emails have un-subscribed from trigger point: " + trigger_point);
               }
-              switch (data.meta.system) {
+              switch (system) {
                 case 'mandrill':
                   return _this.mandrill_send(data, subscribed_emails);
                 default:
@@ -80,7 +81,7 @@
               }
             });
           } else {
-            switch (data.meta.system) {
+            switch (system) {
               case 'mandrill':
                 return _this.get_subscribers(trigger_point).then(function(emails) {
                   if (emails instanceof Error) {
