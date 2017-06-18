@@ -52,6 +52,13 @@
       }
     };
 
+    Validator.prototype.validate_mandrill_apiKey = {
+      query: {},
+      payload: {
+        apiKey: Joi.string().required()
+      }
+    };
+
     return Validator;
 
   })();

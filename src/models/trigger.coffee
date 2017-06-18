@@ -3,11 +3,13 @@ Q = require "q"
 jade = require 'jade'
 Path = require 'path'
 fs = require 'fs-extra'
+moment = require 'moment'
 
 module.exports = (server, options) ->
 
-  bucket = options.database
-  mailgun = require('mailgun-js') { apiKey: options.config.api_key, domain: options.config.domain }
+  bucket   = options.database
+  mailgun  = require('mailgun-js') { apiKey: options.config.api_key, domain: options.config.domain }
+  mandrill = require('mandrill-api/mandrill')
 
   return class Trigger
 
@@ -45,22 +47,70 @@ module.exports = (server, options) ->
           Q.all(promises)
           .then ->
             return new Error("All emails have un-subscribed from trigger point: #{trigger_point}") if subscribed_emails.length is 0
-            _this.render_emails_data(trigger_event, data, subscribed_emails)
-            .then (emails_data) ->
-              promises = []
-              _.each emails_data, (email_data) ->
-                promises.push _this.send(email_data)
-              Q.all(promises)
+            switch data.meta.system
+              when 'mandrill'
+                _this.mandrill_send(data, subscribed_emails)
+              else
+                _this.mailgun_send_to_emails(trigger_event, data, subscribed_emails)
         else
-          _this.get_subscribers(trigger_point)
-          .then (emails) ->
-            return emails if emails instanceof Error
-            _this.render_emails_data(trigger_event, data, emails)
-            .then (emails_data) ->
-              promises = []
-              _.each emails_data, (email_data) ->
-                promises.push _this.send(email_data)
-              Q.all(promises)
+          switch data.meta.system
+            when 'mandrill'
+              _this.get_subscribers(trigger_point)
+                .then (emails) ->
+                  return emails if emails instanceof Error
+                  _this.mandrill_sent(data, emails)
+            else
+              _this.mailgun_send_to_subscribers(trigger_point, trigger_event, data)
+
+    @mandrill_send: (data, emails) ->
+      deferred = Q.defer()
+      mandrill_client = new mandrill.Mandrill(data.meta.mandrill.apiKey)
+      message = {
+        subject: data.meta.mandrill.subject
+        from_email: data.meta.mandrill.from_email
+        from_name: data.meta.mandrill.from_name
+        to: []
+        merge: true
+        merge_language: 'mailchimp'
+        global_merge_vars: []
+      }
+      _.each data.meta.mandrill.global_merge_var_names, (name) ->
+        message.global_merge_vars.push( { name, content: data[name] } )
+      _.each emails, (email) ->
+        message.to.push({ email })
+      async = false
+      send_at = moment().subtract(1, 'd').format('YYYY-MM-DD')
+      mandrill_client.messages.sendTemplate { template_name: data.meta.mandrill.template, template_content: [{}], message, async, send_at },
+        (result) ->
+          console.log(result)
+          deferred.resolve true
+        (e) ->
+          console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message)
+          deferred.resolve new Error e.message
+      deferred.promise
+
+
+
+    @mailgun_send_to_emails: (trigger_event, data, subscribed_emails) ->
+      _this = @
+      _this.render_emails_data(trigger_event, data, subscribed_emails)
+        .then (emails_data) ->
+          promises = []
+          _.each emails_data, (email_data) ->
+            promises.push _this.send(email_data)
+          Q.all(promises)
+
+    @mailgun_send_to_subscribers: (trigger_point, trigger_event, data) ->
+      _this = @
+      _this.get_subscribers(trigger_point)
+      .then (emails) ->
+        return emails if emails instanceof Error
+        _this.render_emails_data(trigger_event, data, emails)
+        .then (emails_data) ->
+          promises = []
+          _.each emails_data, (email_data) ->
+            promises.push _this.send(email_data)
+          Q.all(promises)
 
     @send: (email_data) ->
       deferred = Q.defer()
@@ -206,4 +256,17 @@ module.exports = (server, options) ->
       deferred = Q.defer()
       fs.access path, fs.F_OK | fs.R_OK, (err) ->
         deferred.resolve(err)
+      deferred.promise
+
+    @validate_mandrill_apiKey: (apiKey) ->
+      deferred = Q.defer()
+      mandrill_client = new mandrill.Mandrill apiKey
+      mandrill_client.users.ping2 {},
+        (result) ->
+          if result.PING? && result.PING == 'PONG!'
+            deferred.resolve(true)
+          else
+            deferred.resolve(false)
+        (e) ->
+          deferred.resolve(false)
       deferred.promise

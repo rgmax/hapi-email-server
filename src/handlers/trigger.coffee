@@ -52,4 +52,12 @@ module.exports = (server, options) ->
       .then (result) ->
         return reply.fail(result.message) if result instanceof Error
         reply.nice { list: result, total: result.length }
+
+    validate_mandrill_apiKey: (request, reply) ->
+      apiKey = request.payload.apiKey
+      Trigger.validate_mandrill_apiKey apiKey
+        .then (is_valid) ->
+          return reply.fail false if !is_valid
+          reply.success true
+
   }

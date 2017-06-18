@@ -1,5 +1,5 @@
 (function() {
-  var Path, Q, _, fs, jade;
+  var Path, Q, _, fs, jade, moment;
 
   _ = require("lodash");
 
@@ -11,13 +11,16 @@
 
   fs = require('fs-extra');
 
+  moment = require('moment');
+
   module.exports = function(server, options) {
-    var Trigger, bucket, mailgun;
+    var Trigger, bucket, mailgun, mandrill;
     bucket = options.database;
     mailgun = require('mailgun-js')({
       apiKey: options.config.api_key,
       domain: options.config.domain
     });
+    mandrill = require('mandrill-api/mandrill');
     return Trigger = (function() {
       function Trigger() {}
 
@@ -69,28 +72,99 @@
               if (subscribed_emails.length === 0) {
                 return new Error("All emails have un-subscribed from trigger point: " + trigger_point);
               }
-              return _this.render_emails_data(trigger_event, data, subscribed_emails).then(function(emails_data) {
-                promises = [];
-                _.each(emails_data, function(email_data) {
-                  return promises.push(_this.send(email_data));
-                });
-                return Q.all(promises);
-              });
+              switch (data.meta.system) {
+                case 'mandrill':
+                  return _this.mandrill_send(data, subscribed_emails);
+                default:
+                  return _this.mailgun_send_to_emails(trigger_event, data, subscribed_emails);
+              }
             });
           } else {
-            return _this.get_subscribers(trigger_point).then(function(emails) {
-              if (emails instanceof Error) {
-                return emails;
-              }
-              return _this.render_emails_data(trigger_event, data, emails).then(function(emails_data) {
-                promises = [];
-                _.each(emails_data, function(email_data) {
-                  return promises.push(_this.send(email_data));
+            switch (data.meta.system) {
+              case 'mandrill':
+                return _this.get_subscribers(trigger_point).then(function(emails) {
+                  if (emails instanceof Error) {
+                    return emails;
+                  }
+                  return _this.mandrill_sent(data, emails);
                 });
-                return Q.all(promises);
-              });
-            });
+              default:
+                return _this.mailgun_send_to_subscribers(trigger_point, trigger_event, data);
+            }
           }
+        });
+      };
+
+      Trigger.mandrill_send = function(data, emails) {
+        var async, deferred, mandrill_client, message, send_at;
+        deferred = Q.defer();
+        mandrill_client = new mandrill.Mandrill(data.meta.mandrill.apiKey);
+        message = {
+          subject: data.meta.mandrill.subject,
+          from_email: data.meta.mandrill.from_email,
+          from_name: data.meta.mandrill.from_name,
+          to: [],
+          merge: true,
+          merge_language: 'mailchimp',
+          global_merge_vars: []
+        };
+        _.each(data.meta.mandrill.global_merge_var_names, function(name) {
+          return message.global_merge_vars.push({
+            name: name,
+            content: data[name]
+          });
+        });
+        _.each(emails, function(email) {
+          return message.to.push({
+            email: email
+          });
+        });
+        async = false;
+        send_at = moment().subtract(1, 'd').format('YYYY-MM-DD');
+        mandrill_client.messages.sendTemplate({
+          template_name: data.meta.mandrill.template,
+          template_content: [{}],
+          message: message,
+          async: async,
+          send_at: send_at
+        }, function(result) {
+          console.log(result);
+          return deferred.resolve(true);
+        }, function(e) {
+          console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+          return deferred.resolve(new Error(e.message));
+        });
+        return deferred.promise;
+      };
+
+      Trigger.mailgun_send_to_emails = function(trigger_event, data, subscribed_emails) {
+        var _this;
+        _this = this;
+        return _this.render_emails_data(trigger_event, data, subscribed_emails).then(function(emails_data) {
+          var promises;
+          promises = [];
+          _.each(emails_data, function(email_data) {
+            return promises.push(_this.send(email_data));
+          });
+          return Q.all(promises);
+        });
+      };
+
+      Trigger.mailgun_send_to_subscribers = function(trigger_point, trigger_event, data) {
+        var _this;
+        _this = this;
+        return _this.get_subscribers(trigger_point).then(function(emails) {
+          if (emails instanceof Error) {
+            return emails;
+          }
+          return _this.render_emails_data(trigger_event, data, emails).then(function(emails_data) {
+            var promises;
+            promises = [];
+            _.each(emails_data, function(email_data) {
+              return promises.push(_this.send(email_data));
+            });
+            return Q.all(promises);
+          });
         });
       };
 
@@ -313,6 +387,22 @@
         deferred = Q.defer();
         fs.access(path, fs.F_OK | fs.R_OK, function(err) {
           return deferred.resolve(err);
+        });
+        return deferred.promise;
+      };
+
+      Trigger.validate_mandrill_apiKey = function(apiKey) {
+        var deferred, mandrill_client;
+        deferred = Q.defer();
+        mandrill_client = new mandrill.Mandrill(apiKey);
+        mandrill_client.users.ping2({}, function(result) {
+          if ((result.PING != null) && result.PING === 'PONG!') {
+            return deferred.resolve(true);
+          } else {
+            return deferred.resolve(false);
+          }
+        }, function(e) {
+          return deferred.resolve(false);
         });
         return deferred.promise;
       };

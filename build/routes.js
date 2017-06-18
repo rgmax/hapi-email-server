@@ -61,6 +61,15 @@
           description: "Gets a list of unsubscribed trigger points for an email",
           tags: ["email"]
         }
+      }, {
+        method: "POST",
+        path: "/v1/mandrill/apiKey/validate",
+        config: {
+          handler: Trigger.validate_mandrill_apiKey,
+          validate: TriggerValidator.validate_mandrill_apiKey,
+          description: "Validate given API key",
+          tags: ["apiKey"]
+        }
       }
     ];
   };

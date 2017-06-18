@@ -82,6 +82,16 @@
             total: result.length
           });
         });
+      },
+      validate_mandrill_apiKey: function(request, reply) {
+        var apiKey;
+        apiKey = request.payload.apiKey;
+        return Trigger.validate_mandrill_apiKey(apiKey).then(function(is_valid) {
+          if (!is_valid) {
+            return reply.fail(false);
+          }
+          return reply.success(true);
+        });
       }
     };
   };

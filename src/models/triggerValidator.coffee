@@ -35,3 +35,8 @@ module.exports = class Validator
   unsubscribe_list:
     params:
       email: Joi.string().email().required()
+
+  validate_mandrill_apiKey:
+    query: {}
+    payload:
+      apiKey: Joi.string().required()
