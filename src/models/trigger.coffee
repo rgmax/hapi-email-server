@@ -64,7 +64,9 @@ module.exports = (server, options) ->
               _this.mailgun_send_to_subscribers(trigger_point, trigger_event, data)
 
     @mandrill_send: (data, emails) ->
-      deferred = Q.defer()
+      _this = @
+      data_property_names = Object.getOwnPropertyNames(data)
+      global_merge_var_names = _.filter data_property_names, (name) -> (name != 'meta')
       mandrill_client = new mandrill.Mandrill(data.meta.mandrill.apiKey)
       message = {
         subject: data.meta.mandrill.subject
@@ -75,22 +77,56 @@ module.exports = (server, options) ->
         merge_language: 'mailchimp'
         global_merge_vars: []
       }
-      _.each data.meta.mandrill.global_merge_var_names, (name) ->
+      _.each global_merge_var_names, (name) ->
         message.global_merge_vars.push( { name, content: data[name] } )
       _.each emails, (email) ->
         message.to.push({ email })
       async = false
       send_at = moment().subtract(1, 'd').format('YYYY-MM-DD')
-      mandrill_client.messages.sendTemplate { template_name: data.meta.mandrill.template, template_content: [{}], message, async, send_at },
-        (result) ->
-          console.log(result)
-          deferred.resolve true
-        (e) ->
-          console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message)
-          deferred.resolve new Error e.message
+      if options.config.mock
+        _this.log_mandrill_email(mandrill_client, data.meta.mandrill.template, message.global_merge_vars, emails, data.meta.mandrill.from_email, data.meta.mandrill.subject)
+      else
+        deferred = Q.defer()
+        mandrill_client.messages.sendTemplate { template_name: data.meta.mandrill.template, template_content: [{}], message, async, send_at },
+          (results) ->
+            console.log(results)
+            rejections_count = 0
+            _.each results, (result) ->
+              if result.status == 'rejected'
+                rejections_count++
+            if rejections_count > 0
+              deferred.resolve new Error "#{rejections_count} email/s rejected"
+            else deferred.resolve true
+          (e) ->
+            console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message)
+            deferred.resolve new Error e.message
+        deferred.promise
+
+    @log_mandrill_email: (mandrill_client, template_name, merge_vars, emails, from, subject) ->
+      _this = @
+      deferred = Q.defer()
+      if options.config.dump
+        _.each emails, (email) ->
+          mandrill_client.templates.render {template_name, template_content: [{}], merge_vars},
+            (result) ->
+              if options.config.trace
+                console.log "From: #{from}"
+                console.log "To: #{email}"
+                console.log "Subject: #{subject}"
+                console.log '--------------------'
+              file = Path.join options.config.dump_path, "#{email}_#{subject}.html"
+              _this.dir_ensure(file)
+              .then (err) ->
+                fs.writeFile file, result.html, (error) ->
+                  if error
+                    deferred.resolve new Error error
+                  else
+                    deferred.resolve file
+            (e) ->
+              deferred.resolve new Error e.message
+      else
+        deferred.resolve true
       deferred.promise
-
-
 
     @mailgun_send_to_emails: (trigger_event, data, subscribed_emails) ->
       _this = @

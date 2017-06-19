@@ -97,8 +97,12 @@
       };
 
       Trigger.mandrill_send = function(data, emails) {
-        var async, deferred, mandrill_client, message, send_at;
-        deferred = Q.defer();
+        var _this, async, data_property_names, deferred, global_merge_var_names, mandrill_client, message, send_at;
+        _this = this;
+        data_property_names = Object.getOwnPropertyNames(data);
+        global_merge_var_names = _.filter(data_property_names, function(name) {
+          return name !== 'meta';
+        });
         mandrill_client = new mandrill.Mandrill(data.meta.mandrill.apiKey);
         message = {
           subject: data.meta.mandrill.subject,
@@ -109,7 +113,7 @@
           merge_language: 'mailchimp',
           global_merge_vars: []
         };
-        _.each(data.meta.mandrill.global_merge_var_names, function(name) {
+        _.each(global_merge_var_names, function(name) {
           return message.global_merge_vars.push({
             name: name,
             content: data[name]
@@ -122,19 +126,73 @@
         });
         async = false;
         send_at = moment().subtract(1, 'd').format('YYYY-MM-DD');
-        mandrill_client.messages.sendTemplate({
-          template_name: data.meta.mandrill.template,
-          template_content: [{}],
-          message: message,
-          async: async,
-          send_at: send_at
-        }, function(result) {
-          console.log(result);
-          return deferred.resolve(true);
-        }, function(e) {
-          console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
-          return deferred.resolve(new Error(e.message));
-        });
+        if (options.config.mock) {
+          return _this.log_mandrill_email(mandrill_client, data.meta.mandrill.template, message.global_merge_vars, emails, data.meta.mandrill.from_email, data.meta.mandrill.subject);
+        } else {
+          deferred = Q.defer();
+          mandrill_client.messages.sendTemplate({
+            template_name: data.meta.mandrill.template,
+            template_content: [{}],
+            message: message,
+            async: async,
+            send_at: send_at
+          }, function(results) {
+            var rejections_count;
+            console.log(results);
+            rejections_count = 0;
+            _.each(results, function(result) {
+              if (result.status === 'rejected') {
+                return rejections_count++;
+              }
+            });
+            if (rejections_count > 0) {
+              return deferred.resolve(new Error(rejections_count + " email/s rejected"));
+            } else {
+              return deferred.resolve(true);
+            }
+          }, function(e) {
+            console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+            return deferred.resolve(new Error(e.message));
+          });
+          return deferred.promise;
+        }
+      };
+
+      Trigger.log_mandrill_email = function(mandrill_client, template_name, merge_vars, emails, from, subject) {
+        var _this, deferred;
+        _this = this;
+        deferred = Q.defer();
+        if (options.config.dump) {
+          _.each(emails, function(email) {
+            return mandrill_client.templates.render({
+              template_name: template_name,
+              template_content: [{}],
+              merge_vars: merge_vars
+            }, function(result) {
+              var file;
+              if (options.config.trace) {
+                console.log("From: " + from);
+                console.log("To: " + email);
+                console.log("Subject: " + subject);
+                console.log('--------------------');
+              }
+              file = Path.join(options.config.dump_path, email + "_" + subject + ".html");
+              return _this.dir_ensure(file).then(function(err) {
+                return fs.writeFile(file, result.html, function(error) {
+                  if (error) {
+                    return deferred.resolve(new Error(error));
+                  } else {
+                    return deferred.resolve(file);
+                  }
+                });
+              });
+            }, function(e) {
+              return deferred.resolve(new Error(e.message));
+            });
+          });
+        } else {
+          deferred.resolve(true);
+        }
         return deferred.promise;
       };
 
